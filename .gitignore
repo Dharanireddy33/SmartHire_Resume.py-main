@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pkl
+models/
+*.db
+.DS_Store
+.env
+venv/
+env/
+*.log
+ResumeDataset.csv.csv
+jobs.csv
+logo.png
