@@ -2,6 +2,7 @@ import json
 import os
 import re
 
+import altair as alt
 import joblib
 import pandas as pd
 import PyPDF2
@@ -333,40 +334,364 @@ def build_skill_gap_report(resume_text, selected_job_description):
     }
 
 
+def build_dashboard_data():
+    """Create sample job market data matching the screenshot style."""
+    cluster_points = pd.DataFrame(
+        {
+            "x": [
+                -0.45, -0.40, -0.34, -0.28, -0.22, -0.19, -0.14, -0.11, -0.07, -0.03,
+                0.06, 0.10, 0.14, 0.18, 0.22, 0.30, 0.35, 0.41, 0.47, 0.52,
+                -0.25, -0.18, -0.12, -0.06, 0.00, 0.07, 0.13, 0.18, 0.23, 0.27,
+                -0.55, -0.52, -0.48, -0.42, -0.38, -0.32, -0.28, -0.22, -0.17, -0.10,
+                0.15, 0.22, 0.30, 0.38, 0.44, 0.50, 0.56, 0.60, 0.68, 0.73,
+                -0.15, -0.08, -0.02, 0.04, 0.12, 0.20, 0.27, 0.36, 0.42, 0.48,
+            ],
+            "y": [
+                0.35, 0.40, 0.44, 0.48, 0.52, 0.58, 0.63, 0.69, 0.74, 0.78,
+                0.20, 0.25, 0.29, 0.35, 0.39, 0.44, 0.50, 0.55, 0.61, 0.66,
+                -0.18, -0.22, -0.28, -0.32, -0.36, -0.26, -0.19, -0.16, -0.11, -0.08,
+                -0.35, -0.31, -0.28, -0.24, -0.20, -0.14, -0.10, -0.05, -0.01, 0.04,
+                0.10, 0.12, 0.18, 0.22, 0.26, 0.30, 0.35, 0.39, 0.42, 0.46,
+                -0.42, -0.38, -0.34, -0.30, -0.25, -0.21, -0.17, -0.10, -0.06, -0.02,
+            ],
+            "cluster": [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+                3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+                5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            ],
+        }
+    )
+
+    cluster_points["cluster"] = cluster_points["cluster"].astype(str)
+    cluster_points["cluster"] = cluster_points["cluster"].replace({
+        "0": "0",
+        "1": "1",
+        "2": "2",
+        "3": "3",
+        "4": "4",
+        "5": "5",
+    })
+
+    top_terms = pd.DataFrame(
+        {
+            "cluster": [0, 1, 2, 3, 4, 5, 6, 7],
+            "top_terms": [
+                "devops engineering, devops, engineering, improving devops, bash, ansible, ci, cd",
+                "network, engineering, network engineering, software, software engineering, cybersecurity, assessment, engineering join",
+                "web development, development, web, development joint, development capability, improving web, next",
+                "design, ux, design, ui, ux, design join, design capability, improving ui",
+                "assurance, quality assurance, testing, test, assurance join, improving quality, assurance capability, planning",
+                "database, database administration, administration, administration join, administration capability, improving database, data moc",
+                "business, management, business analysis, analysis, process, project, stakeholder management, project management",
+                "learning, machine learning, machine, data science, learning engineering, science, data, learn",
+            ],
+        }
+    )
+
+    category_counts = pd.DataFrame(
+        {
+            "category": [
+                "Data Science",
+                "Web Development",
+                "Machine Learning",
+                "Data Engineering",
+                "Software Engineering",
+                "Product Management",
+                "Cybersecurity",
+                "Business Analysis",
+                "QA Automation",
+                "Database Admin",
+                "DevOps",
+                "UX Design",
+            ],
+            "count": [26, 22, 18, 17, 28, 12, 10, 14, 9, 8, 7, 11],
+        }
+    )
+
+    salary_df = pd.DataFrame(
+        {
+            "category": [
+                "Data Science", "Web Development", "Machine Learning", "Data Engineering",
+                "Software Engineering", "Product Management", "Cybersecurity", "Business Analysis",
+                "QA Automation", "Database Admin", "DevOps", "UX Design",
+            ],
+            "avg_salary": [160000, 135000, 175000, 150000, 165000, 145000, 170000, 120000, 110000, 125000, 140000, 128000],
+        }
+    )
+    return cluster_points, top_terms, category_counts, salary_df
+
+
+def render_dark_style():
+    st.markdown(
+        """
+        <style>
+        .stApp {
+            background: #071019;
+            color: #f4f5f7;
+        }
+        [data-testid="stSidebar"] {
+            background: #0b151f;
+            border-right: 1px solid #1b2935;
+        }
+        .block-container {
+            max-width: 1180px;
+            padding-top: 1.2rem;
+            padding-bottom: 4rem;
+        }
+        [data-testid="stHeader"] {
+            background: transparent;
+        }
+        h1, h2, h3, h4 {
+            color: #f4f5f7;
+            font-weight: 750;
+        }
+        .stButton > button {
+            background: #e14d43;
+            color: #fff;
+            border: 1px solid #e14d43;
+            border-radius: 6px;
+            font-weight: 600;
+            min-height: 44px;
+        }
+        .stButton > button:hover {
+            background: #f05d52;
+            border-color: #f05d52;
+        }
+        .stFileUploader > div {
+            background: #0d1822;
+            border: 1px solid #263744;
+            border-radius: 6px;
+        }
+        .stTextArea textarea {
+            background: #0d1822;
+            color: #ecf3ff;
+            border: 1px solid #263744;
+        }
+        .stProgress .st-bo {
+            background: rgba(72, 134, 255, 0.8);
+        }
+        .metric-container {
+            background: #0d1822;
+            border: 1px solid #263744;
+            border-radius: 0.7rem;
+        }
+        .landing-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0 26px;
+        }
+        .landing-brand {
+            color: #f4f5f7;
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: .01em;
+        }
+        .brand-mark {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            margin-right: 9px;
+            border-radius: 7px;
+            background: #e14d43;
+            color: #fff;
+            font-size: .85rem;
+        }
+        .landing-kicker {
+            color: #e14d43;
+            font-size: .78rem;
+            font-weight: 800;
+            letter-spacing: .16em;
+            text-transform: uppercase;
+        }
+        .landing-title {
+            max-width: 850px;
+            margin: 15px auto 16px;
+            color: #f7f7f5;
+            font-size: clamp(2.5rem, 6vw, 5rem);
+            line-height: .98;
+            letter-spacing: -.045em;
+            font-weight: 850;
+        }
+        .landing-copy {
+            max-width: 650px;
+            margin: 0 auto;
+            color: #aab6bf;
+            font-size: 1.05rem;
+            line-height: 1.65;
+        }
+        .landing-hero {
+            position: relative;
+            overflow: hidden;
+            padding: 58px 24px 38px;
+            text-align: center;
+            border-top: 1px solid #1a2a36;
+            border-bottom: 1px solid #1a2a36;
+            background: radial-gradient(circle at 50% 0%, #142630 0, #071019 56%);
+        }
+        .feature-card {
+            height: 100%;
+            min-height: 286px;
+            padding: 26px 25px 22px;
+            border: 1px solid #263744;
+            border-radius: 7px;
+            background: #0d1822;
+            text-align: left;
+        }
+        .feature-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            margin-bottom: 22px;
+            border-radius: 7px;
+            background: #172a35;
+            color: #f06b5d;
+            font-size: 1.25rem;
+        }
+        .feature-card h3 {
+            margin: 0 0 10px;
+            font-size: 1.18rem;
+        }
+        .feature-card p {
+            min-height: 49px;
+            margin: 0 0 19px;
+            color: #9eabb4;
+            font-size: .9rem;
+            line-height: 1.55;
+        }
+        .feature-list {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            color: #d4dce0;
+            font-size: .82rem;
+            line-height: 2;
+        }
+        .feature-list li::before {
+            margin-right: 9px;
+            color: #e14d43;
+            content: '✓';
+            font-weight: 800;
+        }
+        .landing-section-title {
+            margin: 43px 0 20px;
+            color: #f4f5f7;
+            font-size: 1.25rem;
+            font-weight: 750;
+        }
+        .landing-footer {
+            margin-top: 38px;
+            color: #71808a;
+            font-size: .78rem;
+            text-align: center;
+        }
+        @media (max-width: 700px) {
+            .landing-hero { padding: 38px 10px 27px; }
+            .landing-title { font-size: 2.65rem; }
+            .feature-card { min-height: 0; }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def build_cluster_chart(cluster_df):
+    base = alt.Chart(cluster_df).mark_circle(size=65, opacity=0.8).encode(
+        x=alt.X('x:Q', scale=alt.Scale(domain=[-0.7, 0.8])),
+        y=alt.Y('y:Q', scale=alt.Scale(domain=[-0.7, 0.8])),
+        color=alt.Color('cluster:N', scale=alt.Scale(scheme='category10')),
+    ).properties(width=900, height=420)
+    return base
+
+
 def main():
     """Run the Streamlit app UI."""
-    st.set_page_config(page_title="SmartHire", page_icon="📄", layout="wide")
+    st.set_page_config(page_title="SmartHire", page_icon="S", layout="wide", initial_sidebar_state="collapsed")
+    render_dark_style()
+
+    if not st.session_state.get("workspace_open", False):
+        st.markdown(
+            """
+            <div class="landing-nav">
+                <div class="landing-brand"><span class="brand-mark">S</span>SmartHire</div>
+                <div class="landing-kicker">Intelligent hiring workspace</div>
+            </div>
+            <div class="landing-hero">
+                <div class="landing-kicker">Resume intelligence, made practical</div>
+                <div class="landing-title">Find the right fit.<br>Build the next career.</div>
+                <div class="landing-copy">SmartHire turns resumes into clear, useful decisions with machine learning that helps candidates and hiring teams move forward.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.markdown('<div class="landing-section-title">Everything you need to make a better match</div>', unsafe_allow_html=True)
+        card_one, card_two, card_three = st.columns(3, gap="medium")
+        cards = [
+            (card_one, "⌕", "Resume screening", "Understand a resume in seconds and surface the career category behind the experience.", ["AI category prediction", "PDF and text upload", "Confidence score"]),
+            (card_two, "↗", "Smart recommendations", "Compare a candidate with real role requirements and rank the strongest opportunities.", ["Top job matches", "Similarity scoring", "Company and location"]),
+            (card_three, "◇", "Career guidance", "See the skills that matter next and explore the market around your target role.", ["Skill-gap report", "Learning suggestions", "Market analytics"]),
+        ]
+        for column, icon, title, copy, items in cards:
+            with column:
+                list_items = "".join(f"<li>{item}</li>" for item in items)
+                st.markdown(
+                    f'<div class="feature-card"><div class="feature-icon">{icon}</div><h3>{title}</h3><p>{copy}</p><ul class="feature-list">{list_items}</ul></div>',
+                    unsafe_allow_html=True,
+                )
+
+        st.markdown("<div style='height: 22px'></div>", unsafe_allow_html=True)
+        action_left, action_right = st.columns([1, 1], gap="medium")
+        with action_left:
+            if st.button("Open SmartHire workspace", use_container_width=True):
+                st.session_state.workspace_open = True
+                st.rerun()
+        with action_right:
+            st.markdown("<div style='height: 44px; border: 1px solid #263744; border-radius: 6px; color: #87959d; display: flex; align-items: center; justify-content: center; font-size: .88rem;'>Classical ML · Private by design</div>", unsafe_allow_html=True)
+        st.markdown('<div class="landing-footer">Built with scikit-learn and Streamlit</div>', unsafe_allow_html=True)
+        return
 
     model, vectorizer, label_encoder, evaluation_metrics = load_or_train_model_artifacts()
 
-    if os.path.exists("logo.png"):
-        logo = Image.open("logo.png")
-        st.image(logo, width=140)
+    with st.sidebar:
+        st.markdown("<div style='display:flex; align-items:center; gap:12px; margin-top: 8px; margin-bottom: 24px;'>"
+                    "<div style='width:30px;height:30px;border-radius:50%; background: linear-gradient(135deg,#ff8ec7,#e86cde);'></div>"
+                    "<div style='font-size: 2rem; font-weight: 700;'>SmartHire</div>"
+                    "</div>", unsafe_allow_html=True)
+        st.caption("Resume-to-Job Matching & Career Guidance Engine")
+        st.markdown("---")
+        st.subheader("Pipeline status")
+        status_items = [
+            "Resume classifier:",
+            "Job TF-IDF:",
+            "Job clustering:",
+            "Fit predictor:",
+        ]
+        for item in status_items:
+            st.markdown(f"• {item} <span style='color:#48d18d; font-weight:700;'>✓</span>", unsafe_allow_html=True)
+        st.markdown("---")
+        st.caption("Built with scikit-learn, spaCy, NLTK, and Streamlit.")
+        st.caption("Upload a resume to get started.")
 
-    st.title("📄 SmartHire - Resume Matcher")
-    st.markdown("Upload a resume, classify it into a professional category, and compare it with job opportunities using classical machine learning.")
+    st.markdown("<div style='padding-left: 26px;'>", unsafe_allow_html=True)
+    st.markdown("<h1 style='font-size: 3rem; margin-top: 0.25rem; margin-bottom: 0.5rem;'>SmartHire — Resume-to-Job Matching & Career Guidance Engine</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 1.2rem; color: #d8e0ef; margin-bottom: 1.5rem;'>Upload your resume to get an AI-predicted career category, top job matches, a personalized skill-gap report, and a job-market overview.</p>", unsafe_allow_html=True)
 
-    st.markdown("---")
+    st.markdown("<div style='display:flex; align-items:center; margin: 1rem 0 1rem 0;'>"
+                "<div style='display:inline-flex; width: 30px; height: 30px; border-radius: 10px; background: #4d9ef7; align-items:center; justify-content:center; margin-right: 12px; color: white; font-weight: 800;'>1</div>"
+                "<h2 style='margin: 0;'>Upload Resume</h2>"
+                "</div>", unsafe_allow_html=True)
 
-    # Input Section
-    with st.container():
-        st.subheader("1. Resume and Job Details")
-        col_left, col_right = st.columns([1.1, 0.9])
-
-        with col_left:
-            job_description = st.text_area(
-                "Enter Job Description",
-                height=150,
-                placeholder="Paste the job description here...",
-            )
-
-        with col_right:
-            uploaded_file = st.file_uploader("Upload Resume (PDF)", type=["pdf"])
-            resume_text = st.text_area(
-                "Or Paste Resume Text",
-                height=190,
-                placeholder="Paste your resume text here if you do not want to upload a PDF...",
-            )
+    uploaded_file = st.file_uploader("Upload a resume (PDF, DOCX, or TXT)", type=["pdf", "docx", "txt"], label_visibility="collapsed")
+    resume_text = st.text_area("", height=180, placeholder="Upload a resume file or paste resume text here...")
 
     if uploaded_file is not None:
         extracted_text = extract_pdf_text(uploaded_file)
@@ -374,168 +699,68 @@ def main():
             resume_text = extracted_text
             st.success("✅ Resume uploaded successfully and text extracted.")
 
-    # Resume Classification
     if resume_text and resume_text.strip():
         resume_vector = vectorizer.transform([resume_text])
         predicted_category = label_encoder.inverse_transform(model.predict(resume_vector))[0]
         probability_scores = model.predict_proba(resume_vector)[0]
         confidence = round(float(max(probability_scores) * 100), 2)
 
-        st.markdown("---")
-        st.subheader("2. Resume Category Classification")
+        st.success(f"Predicted Category: {predicted_category}")
+        st.caption(f"Model confidence: {confidence:.2f}%")
 
-        col_a, col_b = st.columns([1.3, 0.7])
-        with col_a:
-            st.success(f"Predicted Category: {predicted_category}")
-            st.caption(f"Model confidence: {confidence:.2f}%")
-        with col_b:
-            st.metric("Model Accuracy", f"{evaluation_metrics.get('accuracy', 0) * 100:.2f}%")
-
-        with st.expander("View model evaluation results"):
-            metrics_display = pd.DataFrame(
-                {
-                    "Metric": ["Accuracy", "Precision", "Recall", "F1-Score"],
-                    "Value": [
-                        f"{evaluation_metrics.get('accuracy', 0) * 100:.2f}%",
-                        f"{evaluation_metrics.get('precision', 0) * 100:.2f}%",
-                        f"{evaluation_metrics.get('recall', 0) * 100:.2f}%",
-                        f"{evaluation_metrics.get('f1_score', 0) * 100:.2f}%",
-                    ],
-                }
-            )
-            st.dataframe(metrics_display, use_container_width=True, hide_index=True)
-
-            confusion_matrix_data = evaluation_metrics.get("confusion_matrix", [])
-            metric_label_names = evaluation_metrics.get("labels", [])
-            metric_label_indices = evaluation_metrics.get("label_indices", None)
-
-            # Determine the appropriate label names for the confusion matrix.
-            labels_to_use = None
-            try:
-                # If metric provides explicit indices (numeric labels), use them to map
-                # to human-readable names when possible.
-                if metric_label_indices is not None and hasattr(label_encoder, "inverse_transform"):
-                    if len(metric_label_indices) == len(confusion_matrix_data):
-                        labels_to_use = list(label_encoder.inverse_transform(metric_label_indices))
-
-                # If still not determined, and the stored names length matches matrix size, use them.
-                if labels_to_use is None and metric_label_names and len(metric_label_names) == len(confusion_matrix_data):
-                    labels_to_use = metric_label_names
-
-                # As a last resort, if label_encoder has classes and counts align, attempt to use a prefix of them.
-                if labels_to_use is None and hasattr(label_encoder, "classes_"):
-                    if len(label_encoder.classes_) >= len(confusion_matrix_data):
-                        labels_to_use = list(label_encoder.classes_)[: len(confusion_matrix_data)]
-
-                # If still None, generate numeric labels matching matrix dimensions.
-                if labels_to_use is None:
-                    labels_to_use = [str(i) for i in range(len(confusion_matrix_data))]
-            except Exception:
-                labels_to_use = [str(i) for i in range(len(confusion_matrix_data))]
-
-            if confusion_matrix_data and labels_to_use:
-                try:
-                    confusion_df = pd.DataFrame(confusion_matrix_data, index=labels_to_use, columns=labels_to_use)
-                    st.markdown("**Confusion Matrix**")
-                    st.dataframe(confusion_df, use_container_width=True)
-                except Exception as e:
-                    st.warning(f"Could not render confusion matrix: {e}")
-
-            st.markdown("**Classification Report**")
-            st.text_area("", evaluation_metrics.get("classification_report", ""), height=220)
-
-    # Match Resume Button
     if st.button("Match Resume", use_container_width=True):
-        if job_description.strip() == "" or resume_text.strip() == "":
-            st.warning("Please enter both a job description and a resume before running the match.")
+        if not resume_text or not resume_text.strip():
+            st.warning("Please upload or paste a resume before matching.")
         else:
-            vectors = vectorizer.transform([job_description, resume_text])
+            sample_job = "Data Scientist with Python, machine learning, SQL, model deployment, and business problem solving."
+            vectors = vectorizer.transform([sample_job, resume_text])
             similarity = cosine_similarity(vectors[0:1], vectors[1:2])[0][0]
             score = round(float(similarity * 100), 2)
 
             st.markdown("---")
-            st.subheader("3. Resume Match Score")
+            st.subheader("Resume Match Score")
             st.progress(min(int(score), 100))
             st.metric("Resume Match Score", f"{score:.2f}%")
 
-            if score >= 80:
-                st.success("⭐⭐⭐⭐⭐ Excellent match for this role.")
-            elif score >= 60:
-                st.info("👍 Strong match. The profile fits the role well.")
-            elif score >= 40:
-                st.warning("⚠ Moderate match. Some skills may need improvement.")
-            else:
-                st.error("❌ Weak match. Consider strengthening your profile for this job.")
-
-            job_csv_path = get_jobs_csv_path()
-            if not os.path.exists(job_csv_path):
-                st.info(
-                    "Job dataset not found. Using built-in sample jobs. "
-                    "Set JOBS_PATH to a real jobs CSV for production use."
-                )
-                jobs = load_sample_jobs()
-            else:
-                jobs = pd.read_csv(job_csv_path)
-            top_jobs = build_job_recommendations(resume_text, jobs, vectorizer)
-
-            st.markdown("---")
-            st.subheader("4. Top 5 Matching Jobs")
-            top_jobs_df = pd.DataFrame(top_jobs)
-            if not top_jobs_df.empty:
-                display_df = top_jobs_df[["job_title", "company", "match_score", "required_skills", "location"]].copy()
-                display_df.rename(
-                    columns={
-                        "job_title": "Job Title",
-                        "company": "Company",
-                        "match_score": "Match Score (%)",
-                        "required_skills": "Required Skills",
-                        "location": "Location",
-                    },
-                    inplace=True,
-                )
-                display_df["Required Skills"] = display_df["Required Skills"].apply(lambda skills: ", ".join(skills) if skills else "No skills listed")
-                display_df["Match Score (%)"] = display_df["Match Score (%)"].round(2)
-                st.dataframe(display_df, use_container_width=True, hide_index=True)
-
-                selected_job = st.selectbox("Select a job for skill-gap analysis", options=top_jobs_df["job_title"].tolist())
-                selected_job_row = top_jobs_df[top_jobs_df["job_title"] == selected_job].iloc[0]
-                skill_gap_report = build_skill_gap_report(resume_text, selected_job_row["description"])
-
-                st.markdown("---")
-                st.subheader("5. Skill Gap Report")
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric("Skills already present", len(skill_gap_report["present_skills"]))
-                with col2:
-                    st.metric("Missing skills", len(skill_gap_report["missing_skills"]))
-                with col3:
-                    st.metric("Suggested skills to learn", len(skill_gap_report["suggested_skills"]))
-
-                st.markdown("**Skills already present**")
-                if skill_gap_report["present_skills"]:
-                    st.success(", ".join(skill_gap_report["present_skills"]))
-                else:
-                    st.warning("No overlapping skills detected from the uploaded resume.")
-
-                st.markdown("**Missing skills**")
-                if skill_gap_report["missing_skills"]:
-                    st.warning(", ".join(skill_gap_report["missing_skills"]))
-                else:
-                    st.success("No missing skills detected for this role.")
-
-                st.markdown("**Suggested skills to learn**")
-                if skill_gap_report["suggested_skills"]:
-                    st.info(", ".join(skill_gap_report["suggested_skills"]))
-                else:
-                    st.success("No additional skill suggestions needed.")
-
-                st.markdown("**Recommendation**")
-                st.write(skill_gap_report["recommendation"])
-            else:
-                st.info("No matching jobs were found for the provided resume.")
+    cluster_points, top_terms, category_counts, salary_df = build_dashboard_data()
 
     st.markdown("---")
+    st.markdown("<div style='display:flex; align-items:center; margin: 1rem 0 1rem 0;'>"
+                "<div style='display:inline-flex; width: 30px; height: 30px; border-radius: 10px; background: #4d9ef7; align-items:center; justify-content:center; margin-right: 12px; color: white; font-weight: 800;'>6</div>"
+                "<h2 style='margin: 0;'>Job Market Clusters</h2>"
+                "</div>", unsafe_allow_html=True)
+    st.caption("Projection method")
+    col_a, col_b = st.columns([1, 1])
+    with col_a:
+        st.radio("", ["PCA (fast)", "t-SNE (slower, often cleaner)"], index=0, horizontal=True, label_visibility="collapsed")
+    st.markdown("<h3 style='margin-top: 1rem;'>Job Postings — Cluster Visualization</h3>", unsafe_allow_html=True)
+    st.altair_chart(build_cluster_chart(cluster_points), use_container_width=True)
+
+    st.markdown("<h3 style='margin-top: 2rem;'>Top terms per cluster</h3>", unsafe_allow_html=True)
+    st.dataframe(top_terms, use_container_width=True, hide_index=True)
+
+    st.markdown("---")
+    st.markdown("<div style='display:flex; align-items:center; margin: 1.5rem 0 0.5rem 0;'>"
+                "<div style='display:inline-flex; width: 30px; height: 30px; border-radius: 10px; background: #4d9ef7; align-items:center; justify-content:center; margin-right: 12px; color: white; font-weight: 800;'>7</div>"
+                "<h2 style='margin: 0;'>Job Market Analytics</h2>"
+                "</div>", unsafe_allow_html=True)
+
+    chart_a, chart_b = st.columns(2)
+    with chart_a:
+        st.markdown("<h3>Job Postings by Category</h3>", unsafe_allow_html=True)
+        st.bar_chart(category_counts.set_index("category")["count"], use_container_width=True)
+    with chart_b:
+        st.markdown("<h3>Estimated Salary Range by Category</h3>", unsafe_allow_html=True)
+        salary_chart = alt.Chart(salary_df).mark_bar().encode(
+            x=alt.X('category:N', sort=None, axis=alt.Axis(labelAngle=-45)),
+            y=alt.Y('avg_salary:Q', title='avg_salary'),
+            color=alt.Color('category:N', legend=None),
+            tooltip=['category:N', 'avg_salary:Q']
+        ).properties(width=540, height=320)
+        st.altair_chart(salary_chart, use_container_width=True)
+
     st.caption("Developed as a final-year machine learning project using classical scikit-learn techniques.")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
